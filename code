@@ -1,0 +1,66 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import java.util.concurrent.TimeUnit;
+
+public class GoogleSearchTest {
+
+    private WebDriver driver;
+
+    @BeforeTest
+    public void setup() {
+        // Initialize the ChromeDriver
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+        driver = new ChromeDriver();
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        driver.manage().window().maximize();
+    }
+
+    @Test
+    public void testGoogleSearch() {
+        // Open Google.com
+        driver.get("https://www.google.com");
+
+        // Search for keyword "Foodics"
+        WebElement searchField = driver.findElement(By.name("q"));
+        searchField.sendKeys("Foodics");
+        searchField.sendKeys(Keys.ENTER);
+
+        // Assert that search results exist
+        Assert.assertTrue(driver.findElement(By.cssSelector("#search .g")).isDisplayed());
+
+        // Remove the keyword and search for a new one
+        searchField = driver.findElement(By.name("q"));
+        searchField.clear();
+        searchField.sendKeys("Restaurant Software");
+        searchField.sendKeys(Keys.ENTER);
+
+        // Scroll down and go to the next page
+        Actions actions = new Actions(driver);
+        actions.moveToElement(driver.findElement(By.cssSelector("#result-stats"))).perform();
+        driver.findElement(By.cssSelector("#pnnext")).click();
+
+        // Validate if the number of results on page 2 is equal to page 3 or not
+        String numberOfResultsOnPage2 = driver.findElement(By.cssSelector("#result-stats")).getText();
+        driver.findElement(By.cssSelector("#pnnext")).click();
+        String numberOfResultsOnPage3 = driver.findElement(By.cssSelector("#result-stats")).getText();
+        Assert.assertEquals(numberOfResultsOnPage2, numberOfResultsOnPage3);
+
+        // Validate there are different search suggestions displayed at the end of the page
+        Assert.assertTrue(driver.findElement(By.cssSelector("#brs .brs_col")).isDisplayed());
+    }
+
+    @AfterTest
+    public void teardown() {
+        // Close the browser window
+        driver.quit();
+    }
+}
